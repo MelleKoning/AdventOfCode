@@ -149,7 +149,7 @@ func PrintGrid(snake map[int]*Walker) {
 	for y := 20; y >= 0; y-- {
 		for x := 0; x < 27; x++ {
 			printed := false
-			for key, _ := range snake {
+			for key := range snake {
 				if snake[key].CurrentPos.X == x &&
 					snake[key].CurrentPos.Y == y {
 					if key == 0 {

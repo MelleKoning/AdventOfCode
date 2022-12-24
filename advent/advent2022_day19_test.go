@@ -64,12 +64,9 @@ func TestDay19_1(t *testing.T) {
 		}
 		fmt.Printf("%s\n", line)
 		bluePrint = GoForBlueprint(line)
-		var overallmax *int
-		overallmax = new(int)
+		overallmax := new(int)
 		*overallmax = -1
-		var geodesDolven int
-
-		geodesDolven = DelveGeodesRecursive(bluePrint, 1, overallmax)
+		geodesDolven := DelveGeodesRecursive(bluePrint, 1, overallmax)
 
 		quality := geodesDolven * (idx + 1)
 		fmt.Printf("Geodes opened: %+v, Quality is %d*%d=%d\n", geodesDolven, idx+1, geodesDolven, quality)
@@ -87,11 +84,8 @@ func (o *OwningDay19) StopCondition(minute int, overallmax *int) bool {
 	// Keep track of the optimal answer so far. Stop if we cannot beat that even
 	// if we build a geode robot every minute from here on out.
 	// upper bound: currentGeodes + currentGeodes * timeLeft + geodesFromPotentialNewBots (assume +1 bot/min)
-	if *overallmax > (o.Geodes + o.Geodes*(MaxMinutes-minute) +
-		(((MaxMinutes - minute) * ((MaxMinutes - minute) + 1)) / 2)) {
-		return true
-	}
-	return false
+	return *overallmax > (o.Geodes + o.Geodes*(MaxMinutes-minute) +
+		(((MaxMinutes - minute) * ((MaxMinutes - minute) + 1)) / 2)) // n(n-1)/2
 }
 
 // returns the (hopefully max) number of Geodes found
