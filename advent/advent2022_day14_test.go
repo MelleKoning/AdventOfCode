@@ -73,15 +73,16 @@ func (r *Rocks) MinMaxLocations() (int, int, int, int) {
 	xMax := math.MinInt
 	yMin := math.MaxInt
 	yMax := math.MinInt
-	for elf := range r.rocksMap {
+	for elf, cell := range r.rocksMap {
 		if elf.X < xMin {
 			xMin = elf.X
 		}
 		if elf.X > xMax {
 			xMax = elf.X
 		}
-		if elf.Y > yMax {
+		if elf.Y > yMax && cell == CELL_ROCK {
 			yMax = elf.Y
+
 		}
 		if elf.Y < yMin {
 			yMin = elf.Y
@@ -92,7 +93,7 @@ func (r *Rocks) MinMaxLocations() (int, int, int, int) {
 
 func (r *Rocks) PrintGrid() {
 	minX, maxX, minY, maxY := r.MinMaxLocations()
-	for row := minY; row <= maxY; row++ {
+	for row := minY; row <= maxY+2; row++ {
 		for col := minX; col <= maxX; col++ {
 			block, ok := r.rocksMap[Point{col, row}]
 			if ok {
@@ -133,7 +134,7 @@ func NewCave(fileLines []string) *Rocks {
 }
 
 // returns true when sand drops into the VOID
-func (r *Rocks) DropSand() bool {
+func (r *Rocks) DropSand(infFloor bool) bool {
 	// Dropping sand in the cave starts at (500,0)
 	sandLoc := Point{500, 0}
 
@@ -141,17 +142,36 @@ func (r *Rocks) DropSand() bool {
 	// or maybe if we go beyond the current Cove Coordinates
 	minX, maxX, _, maxY := r.MinMaxLocations()
 	for {
+
 		testPoint := Point{sandLoc.X, sandLoc.Y}
+		// empty as not found so continue dropping, but let's see if we already
+		// dropped out of the bounds of the grid
+		if !infFloor {
+			if testPoint.X < minX || testPoint.X > maxX || testPoint.Y > maxY {
+				// THE VOID
+				return true
+			}
+
+		} else {
+			// in case of an infinite floor, we should stop when
+			// the three points below the droppoint are filled
+			_, left := r.rocksMap[Point{499, 1}]
+			_, mid := r.rocksMap[Point{500, 1}]
+			_, right := r.rocksMap[Point{501, 1}]
+			if left && mid && right {
+				return true // area filled up
+			}
+		}
 		cell, solid := r.rocksMap[testPoint]
 		if solid && cell != CELL_DROPPOINT {
 			// we hit something, test if can go left or right
 			_, leftSolid := r.rocksMap[Point{sandLoc.X - 1, sandLoc.Y}]
-			if !leftSolid && sandLoc.X-1 >= minX { // we can go left
+			if !leftSolid { // we can go left
 				sandLoc.X = sandLoc.X - 1
 				continue
 			}
 			_, rightSolid := r.rocksMap[Point{sandLoc.X + 1, sandLoc.Y}]
-			if !rightSolid && sandLoc.X <= maxX { // sand can go right
+			if !rightSolid { // sand can go right
 				sandLoc.X = sandLoc.X + 1
 				continue
 			}
@@ -159,12 +179,14 @@ func (r *Rocks) DropSand() bool {
 				r.rocksMap[Point{sandLoc.X, sandLoc.Y - 1}] = CELL_SAND
 				break
 			}
+
 		}
-		// empty as not found so continue dropping, but let's see if we already
-		// dropped out of the bounds of the grid
-		if testPoint.X < minX || testPoint.X > maxX || testPoint.Y > maxY {
-			// THE VOID
-			return true
+		if infFloor {
+			if sandLoc.Y == maxY+2 {
+				// reached floor
+				r.rocksMap[Point{sandLoc.X, sandLoc.Y - 1}] = CELL_SAND
+				break
+			}
 		}
 		sandLoc.Y = sandLoc.Y + 1
 	}
@@ -178,12 +200,83 @@ func TestSandFalling_Example1(t *testing.T) {
 
 	Cave := NewCave(fileLines)
 	Cave.PrintGrid()
-	for n := 1; n < 26; n++ {
-		void := Cave.DropSand()
+	n := 0
+	for {
+		n = n + 1
+		void := Cave.DropSand(false)
 		if void {
-			fmt.Printf("Sand droplet: %d\n", n)
+			Cave.PrintGrid()
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			break
 		}
 		Cave.PrintGrid()
+	}
+}
+
+func TestSandFalling_Example1InfiniteFloor(t *testing.T) {
+	fileLines, err := GetFileLines("inputdata/input2022day14example.txt")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	Cave := NewCave(fileLines)
+	Cave.PrintGrid()
+	n := 0
+	for {
+		n = n + 1
+		void := Cave.DropSand(true)
+		if void {
+			Cave.PrintGrid()
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			break
+		}
+		Cave.PrintGrid()
+	}
+}
+
+func TestSandFalling_Task1(t *testing.T) {
+	fileLines, err := GetFileLines("inputdata/input2022day14.txt")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	Cave := NewCave(fileLines)
+	Cave.PrintGrid()
+	n := 0
+	for {
+		n = n + 1
+		void := Cave.DropSand(false)
+		if void {
+			Cave.PrintGrid()
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			break
+		}
+
+	}
+
+}
+
+func TestSandFalling_Task2_Infinite(t *testing.T) {
+	fileLines, err := GetFileLines("inputdata/input2022day14.txt")
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	Cave := NewCave(fileLines)
+	Cave.PrintGrid()
+	n := 0
+	for {
+		n = n + 1
+		void := Cave.DropSand(true)
+		if void {
+			Cave.PrintGrid()
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			break
+		}
+		if n%1000 == 0 {
+			Cave.PrintGrid()
+		}
+
 	}
 
 }
