@@ -227,7 +227,7 @@ func TestSandFalling_Example1InfiniteFloor(t *testing.T) {
 		void := Cave.DropSand(true)
 		if void {
 			Cave.PrintGrid()
-			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n, n+1) // add one for the sand creation point
 			break
 		}
 		Cave.PrintGrid()
@@ -270,7 +270,7 @@ func TestSandFalling_Task2_Infinite(t *testing.T) {
 		void := Cave.DropSand(true)
 		if void {
 			Cave.PrintGrid()
-			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n-1, n)
+			fmt.Printf("Came to rest: %d, sand droplet into void: %d\n", n, n+1) // add one for the sand creation point
 			break
 		}
 		if n%1000 == 0 {
