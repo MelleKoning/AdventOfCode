@@ -191,49 +191,6 @@ func AlreadySeen(seen []*CubyDay18, inspect *CubyDay18) bool {
 	return false
 }
 
-/*
-const runPart2 = drops => {
-   drops = drops.map(([x, y, z]) => [x + 1, y + 1, z + 1]);
-   const maxX = Math.max(...drops.map(d => d[0])) + 1;
-   const maxY = Math.max(...drops.map(d => d[1])) + 1;
-   const maxZ = Math.max(...drops.map(d => d[2])) + 1;
-   const map = range(maxX + 1).map(() => range(maxY + 1).map(() => range(maxZ + 1).map(() => false)));
-   drops.forEach(([x, y, z]) => {
-      map[x][y][z] = true;
-   });
-
-   let sides = 0;
-   const transforms = [[-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1]];
-   const seen = map.map(slice => slice.map(row => row.map(() => false)));
-
-   const toExpore = [[0, 0, 0]];
-   while (toExpore.length > 0) {
-      const [x, y, z] = toExpore.pop();
-      if (seen[x][y][z]) {
-         continue;
-      }
-
-      seen[x][y][z] = true;
-      for (const [dx, dy, dz] of transforms) {
-         const xp = x + dx;
-         const yp = y + dy;
-         const zp = z + dz;
-         if (xp < 0 || yp < 0 || zp < 0 || xp > maxX || yp > maxY || zp > maxZ) {
-            continue;
-         }
-
-         if (map[xp][yp][zp]) {
-            sides++;
-            continue;
-         }
-
-         toExpore.push([xp, yp, zp]);
-      }
-   }
-
-   return sides;
-*/
-
 // Addcube returns the exposed number of areas for the
 // added cube
 func (c *CubeListDay18) AddCube(cube *CubyDay18) int {
@@ -247,6 +204,9 @@ func (c *CubeListDay18) AddCube(cube *CubyDay18) int {
 	return exposed
 }
 
+// IsAdjacent returns true when cubies a and b are adjacent based
+// on comparing their direct connected neighbour - that is, if an edge
+// on the X, Y or Z side (-1 or +1) is adjacent return true otherwise false
 func IsAdjacent(a, b *CubyDay18) bool {
 	if (a.X == b.X && a.Y == b.Y && (a.Z == b.Z+1 || a.Z == b.Z-1)) ||
 		(a.Y == b.Y && a.Z == b.Z && (a.X == b.X+1 || a.X == b.X-1)) ||
@@ -256,6 +216,8 @@ func IsAdjacent(a, b *CubyDay18) bool {
 	return false
 }
 
+// LavaAt inspects if the point has lava by inspecting
+// the full list of kept lava cubies
 func (c *CubeListDay18) LavaAt(x, y, z int) bool {
 	for _, cubie := range c.Cubes {
 		if x == cubie.X &&

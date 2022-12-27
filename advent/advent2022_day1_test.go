@@ -11,7 +11,7 @@ import (
 
 func TestFindElvesCarriesMostFood(t *testing.T) {
 
-	lines, err := GetFileLines("inputdata/day1_2022.txt")
+	lines, err := GetFileLines("inputdata/input2022day1.txt")
 	if err != nil {
 		t.Fatalf("can not read file")
 	}
@@ -28,14 +28,12 @@ func TestFindElvesCarriesMostFood(t *testing.T) {
 		intVar, err := strconv.Atoi(l)
 		if err != nil {
 			fmt.Printf("%v", intVar)
-			t.Fatalf("shit %v", err)
+			t.Fatalf("intvar err %v", err)
 		}
 		elfcounter += intVar
 		if elfcounter > maxelf {
 			maxelf = elfcounter
 		}
-		/*if l == ""
-		elfcounter = 0*/
 	}
 
 	fmt.Printf("maxelf:%v", maxelf)
@@ -44,7 +42,7 @@ func TestFindElvesCarriesMostFood(t *testing.T) {
 
 func TestFindTop3Elves(t *testing.T) {
 
-	lines, err := GetFileLines("inputdata/day1_2022.txt")
+	lines, err := GetFileLines("inputdata/input2022day1.txt")
 	if err != nil {
 		t.Fatalf("can not read file")
 	}

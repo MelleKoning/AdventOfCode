@@ -8,12 +8,12 @@ import (
 )
 
 func TestMoveTowers(t *testing.T) {
-	// fileLines := []string{"2-4,6-8", "2-3,4-5", "5-7,7-9", "2-8,3-7", "6-6,4-6", "2-6,4-8", "12-23,5-24"}
 	fileLines, err := GetFileLines("inputdata/input2022day5.txt")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
 
+	// just copy the data from the file instead of trying to parse it
 	towers := make(map[int]string, 9)
 	towers[1] = "PFMQWGRT" // bottom to top
 	towers[2] = "HFR"
@@ -67,7 +67,6 @@ func TestMoveTowers(t *testing.T) {
 }
 
 func TestMoveTowersMultipleAtonce(t *testing.T) {
-	// fileLines := []string{"2-4,6-8", "2-3,4-5", "5-7,7-9", "2-8,3-7", "6-6,4-6", "2-6,4-8", "12-23,5-24"}
 	fileLines, err := GetFileLines("inputdata/input2022day5.txt")
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -100,13 +99,6 @@ func TestMoveTowersMultipleAtonce(t *testing.T) {
 		crates := towers[from][len(towers[from])-amount:]
 		towers[to] = towers[to] + crates
 		towers[from] = towers[from][:len(towers[from])-amount]
-
-		// take top crates from
-		//topfrom := towers[from][len(towers[from])-amount : len(towers[from])]
-		// adjust from by reducing slice
-		//towers[from] = towers[from][0 : len(towers[from])-amount]
-		// add to
-		//towers[to] = towers[to] + string(topfrom)
 
 		fmt.Printf("%v\n", towers)
 	}

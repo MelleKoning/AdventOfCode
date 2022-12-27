@@ -6,7 +6,6 @@ import (
 )
 
 func TestFindFourCharacters(t *testing.T) {
-
 	fileLines, err := GetFileLines("inputdata/input2022day6.txt")
 	if err != nil {
 		t.Fatalf("%v", err)
