@@ -139,39 +139,45 @@ func (ds16 *Day16Search) OpenValvesRecursive(minute int, OpenedValves int, MoveT
 	}
 
 	// From the current valve we can open it, if the valve was not already opened before
-	max := 0
-	OpenAction := false
 	if !MoveToValve.Open && MoveToValve.FlowRate > 0 { // initial valve AA has flowRate of 0
 		MoveToValve.Open = true // this is the action of this minute
-		OpenAction = true
-		OpenedValves += 1
+		released := ds16.OpenValvesRecursive(minute+1, OpenedValves+1, MoveToValve)
+		MoveToValve.Open = false // close after recursive call
+		return released + releasedThisMinute
 	}
+
+	max := 0
 	// or if valve is (already) open, we can move to other valves
-	for travelValve, cost := range MoveToValve.MoveCost {
+	for travelValve, walkCost := range MoveToValve.MoveCost {
 		// if we can't open that Valve, because it was already opened, there really is no need
 		// to visit that valve, so skip it
 		if travelValve.Open {
 			continue
 		}
-		// in case the cost is higher than we have time for we should not go there
-		// but just return the releaseAmount that can be reached
-		if minute+cost > 30 {
-			released := ds16.OpenValvesRecursive(minute+1, OpenedValves, MoveToValve) // just pass value to stay
-			return releasedThisMinute + released                                      // no alternative moves to make just wait it out
+		// in case the cost is higher than we have time left for then we should not go there
+		// but just return the releaseAmount that can be reached with current open Valves
+		var released int
+		if minute+walkCost > 30 {
+			// maximum open valves we can reach so add up we can still reach for this move is..
+			released = ds16.ReleasedPressure() * (30 - minute)
+		} else {
+			// go deeper
+			releasedWalkingThere := ds16.ReleasedPressure() * (walkCost - 1)
+			released = ds16.OpenValvesRecursive(minute+walkCost, OpenedValves, travelValve)
+			// have to add the movecost ReleasedPressue without CURRENT as it is already included at the end
+			// the releasedThisMinute is added below at the end when max for all possible
+			// other valves is determined
+			released += releasedWalkingThere
 		}
-		releasedWalkingThere := ds16.ReleasedPressure() * (cost - 1) // this includes CURRENT!
-		released := ds16.OpenValvesRecursive(minute+cost, OpenedValves, travelValve)
-		// have to add the movecost ReleasedPressue without CURRENT as it is already include
-		released += releasedWalkingThere
 
 		if released > max {
 			max = released
 		}
 	}
-	if OpenAction {
-		released := ds16.OpenValvesRecursive(minute+1, OpenedValves, MoveToValve)
-		MoveToValve.Open = false // close after recursive call
-		return released + releasedThisMinute
+
+	// if we have not exhausted all minutes, then we should...
+	if max == 0 {
+		max = ds16.OpenValvesRecursive(minute+1, OpenedValves, MoveToValve)
 	}
 	return releasedThisMinute + max
 }
@@ -234,12 +240,6 @@ func NewDay16Search(lines []string) *Day16Search {
 			leadsto = leadsto[2:] // cut the `s `` that is there from "to valves "
 		}
 		v := ds16.SetValveFlowRate(valve, flowrate)
-		// lets position ourselves at the first valve read, as puzzle
-		// description NOT too clear on this? It says has to be AA but AA not part
-		// of the puzzle input..
-		if ds16.StartValve == nil {
-			ds16.StartValve = v
-		}
 		for _, l := range strings.Split(leadsto, ",") {
 			leadto := strings.Trim(l, " ")
 			leadtoValve := ds16.FindValveOrCreate(leadto)
@@ -251,6 +251,12 @@ func NewDay16Search(lines []string) *Day16Search {
 	for _, valve := range ds16.Valves {
 		if valve.FlowRate > 0 {
 			abovezero += 1
+		}
+		// lets position ourselves at the first valve read, as puzzle
+		// description NOT too clear on this? It says has to be AA but AA not part
+		// of the puzzle input..
+		if valve.ID == "AA" {
+			ds16.StartValve = valve
 		}
 	}
 	ds16.ValvesWithFlowRateAboveZero = abovezero
@@ -266,7 +272,7 @@ func NewDay16Search(lines []string) *Day16Search {
 }
 
 func (ds16 *Day16Search) PrintValves() {
-	fmt.Printf("valves read %d", len(ds16.Valves))
+	fmt.Printf("valves read %d\n", len(ds16.Valves))
 
 	for _, v := range ds16.Valves {
 		fmt.Printf("%s with rate %d leads to..\n", v.ID, v.FlowRate)
@@ -277,10 +283,10 @@ func (ds16 *Day16Search) PrintValves() {
 			fmt.Printf("    %s with cost %d\n", flowValve.ID, cost)
 		}
 	}
-
 }
-func TestDay16Task1(t *testing.T) {
-	fileLines, err := GetFileLines("input2022day16Example.txt")
+
+func TestDay16_Example_Task1(t *testing.T) {
+	fileLines, err := GetFileLines("inputdata/input2022day16Example.txt")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -292,10 +298,21 @@ func TestDay16Task1(t *testing.T) {
 	fmt.Printf("max released %d\n", released)
 
 	assert.Equal(t, 1651, released)
-	/*for _, move := range movepath {
-		fmt.Printf("At: %s, minute: %d, Released %d\n", move.StandingAtValve.ID, move.Minute, move.Released)
-		if move.OpeningValve.ID != "" {
-			fmt.Printf("Opening %s\n", move.OpeningValve.ID)
-		}
-	}*/
+}
+
+func TestDay16_Task1(t *testing.T) {
+	fileLines, err := GetFileLines("inputdata/input2022day16.txt")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	ds16 := NewDay16Search(fileLines)
+	ds16.PrintValves()
+
+	released := ds16.OpenValvesRecursive(1, 0, ds16.StartValve)
+	fmt.Printf("max released %d\n", released)
+
+	assert.Equal(t, 2253, released) // 1949 is TOO LOW!? 25193 // too HIGH // 23054 WRONG // 22246 wrong
+	// 3238 ?? 3199?? 3410? :-) 3419? :) 2253 IS GOOD haha Turns out I had an issue running through the un-ordered
+	// map of the shortest paths from the valves.. argh :)
 }
