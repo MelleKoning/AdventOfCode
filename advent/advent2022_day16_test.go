@@ -9,13 +9,13 @@ import (
 )
 
 type Valve struct {
-	ID       string
-	LeadTo   []*Valve
-	FlowRate int
-	Open     bool
-	Explored bool           // used in shortestPath
-	Parent   *Valve         // used in shortestPath
-	MoveCost map[*Valve]int // cost of moving to other valve in steps/minutes
+	ID                 string
+	LeadTo             []*Valve
+	FlowRate           int
+	Open               bool
+	Explored           bool           // used in shortestPath
+	Parent             *Valve         // used in shortestPath
+	ValvesWithFlowRate map[*Valve]int // cost of moving to other valve in steps/minutes
 }
 
 type ValveMove struct {
@@ -52,14 +52,14 @@ func (ds16 *Day16Search) DetermineShortestPaths() {
 	// and we want to do so in a quick manner withoug wasting time walking through
 	// tunnels without any cause....
 	for _, v := range ds16.Valves {
-		v.MoveCost = make(map[*Valve]int)
+		v.ValvesWithFlowRate = make(map[*Valve]int)
 		for _, otherV := range ds16.Valves {
 			if (v == ds16.StartValve && otherV.FlowRate > 0 ||
 				(v.FlowRate > 0 && otherV.FlowRate > 0)) &&
 				v != otherV {
 				// determine shortest path to other valve
 				cost := ds16.ShortestRouteToValve(v, otherV)
-				v.MoveCost[otherV] = cost
+				v.ValvesWithFlowRate[otherV] = cost
 			}
 		}
 	}
@@ -139,6 +139,7 @@ func (ds16 *Day16Search) OpenValvesRecursive(minute int, OpenedValves int, MoveT
 	}
 
 	// From the current valve we can open it, if the valve was not already opened before
+	//
 	if !MoveToValve.Open && MoveToValve.FlowRate > 0 { // initial valve AA has flowRate of 0
 		MoveToValve.Open = true // this is the action of this minute
 		released := ds16.OpenValvesRecursive(minute+1, OpenedValves+1, MoveToValve)
@@ -148,7 +149,10 @@ func (ds16 *Day16Search) OpenValvesRecursive(minute int, OpenedValves int, MoveT
 
 	max := 0
 	// or if valve is (already) open, we can move to other valves
-	for travelValve, walkCost := range MoveToValve.MoveCost {
+	// if we start from A, this loop will try to walk to any other
+	// valve with a FlowRate to calculate what valve is best to start off from
+	// and keep that value in the max variable
+	for travelValve, walkCost := range MoveToValve.ValvesWithFlowRate {
 		// if we can't open that Valve, because it was already opened, there really is no need
 		// to visit that valve, so skip it
 		if travelValve.Open {
@@ -176,6 +180,7 @@ func (ds16 *Day16Search) OpenValvesRecursive(minute int, OpenedValves int, MoveT
 	}
 
 	// if we have not exhausted all minutes, then we should...
+	// ... not entirely sure if this ever occurs though
 	if max == 0 {
 		max = ds16.OpenValvesRecursive(minute+1, OpenedValves, MoveToValve)
 	}
@@ -253,8 +258,7 @@ func NewDay16Search(lines []string) *Day16Search {
 			abovezero += 1
 		}
 		// lets position ourselves at the first valve read, as puzzle
-		// description NOT too clear on this? It says has to be AA but AA not part
-		// of the puzzle input..
+		// description NOT too clear on this? It says has to be AA
 		if valve.ID == "AA" {
 			ds16.StartValve = valve
 		}
@@ -265,7 +269,8 @@ func NewDay16Search(lines []string) *Day16Search {
 	// that have a FlowRate. If we have such a list, we only need to worry about
 	// moving through the tunnels of those particular paths.
 
-	// first, get a list of all the valves that have a flowrate.
+	// first, get a list of all the valves that have a flowrate and
+	// calculate the shortest route to other valves with a flowrate
 	ds16.DetermineShortestPaths()
 
 	return ds16
@@ -279,7 +284,7 @@ func (ds16 *Day16Search) PrintValves() {
 		for _, l := range v.LeadTo {
 			fmt.Printf("     %s with rate %d\n", l.ID, l.FlowRate)
 		}
-		for flowValve, cost := range v.MoveCost {
+		for flowValve, cost := range v.ValvesWithFlowRate {
 			fmt.Printf("    %s with cost %d\n", flowValve.ID, cost)
 		}
 	}
