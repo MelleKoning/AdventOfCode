@@ -135,6 +135,8 @@ func NewDigitReader() *DigitReader {
 	}
 }
 
+// Finds the first digit in line and returns
+// the Position of that and the digit
 func DetermineFirstNumber(line string) (int, int) {
 	// based on a line get the first digit and the last
 	// and combine those for the return value
