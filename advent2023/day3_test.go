@@ -96,3 +96,90 @@ func findNumbers(str string) []*PosNumber {
 
 	return result
 }
+
+// We have to find numbers that are adjacent to the gear(*) symbol,
+// but only the gears that have two adjacent numbers are important.
+// Not sure if we might have gears with 3 numbers around it btw..
+func TestDay3Task2(t *testing.T) {
+	lines := GetLinesFromFile("input/day3input.txt")
+
+	var allNumbers []*PosNumber
+	for lineIndex, line := range lines {
+		numbersForLine := findNumbers(line)
+
+		fmt.Printf("%s\n", line)
+
+		for _, res := range numbersForLine {
+			// record the lineIndex for found numbers
+			res.LineIndex = lineIndex
+			//fmt.Printf("line: %d, cols:(%d-%d), n:%d\n ", res.LineIndex, res.StartPos, res.EndPos, res.Number)
+		}
+		allNumbers = append(allNumbers, numbersForLine...)
+	}
+
+	// Now we have all numbers and their locations in allNumbers.
+
+	totalSum := 0
+
+	// now we just loop over all gear(*) symbols to search
+	// for surrounding numbers on adjacent lines
+	for lineIndexofStar, l := range lines {
+		fmt.Printf("%s\n", l)
+		starPositions := findCharPositions(l, '*')
+
+		for _, starPos := range starPositions {
+			var foundNumbers []*PosNumber
+			for _, number := range allNumbers {
+				if numberTouchesSymbol(number, lineIndexofStar, starPos, len(lines)) {
+					foundNumbers = append(foundNumbers, number)
+				}
+			}
+			// if the foundnumbers length is two, we have to add to the total
+			if len(foundNumbers) == 2 {
+				totalSum += foundNumbers[0].Number * foundNumbers[1].Number
+			}
+		}
+
+	}
+
+	fmt.Printf("totalSum: %d\n", totalSum)
+}
+
+func numberTouchesSymbol(number *PosNumber, lineIndex, starPos, numberoflines int) bool {
+	// loop three lines
+	for looplines := lineIndex - 1; looplines <= lineIndex+1; looplines++ {
+		if number.LineIndex != looplines {
+			continue
+		}
+		if looplines < 0 || looplines > numberoflines {
+			continue
+		}
+		// inspect if this number touches the star
+		if number.StartPos == starPos || number.StartPos == starPos+1 {
+			return true // startposition of number is ok
+		}
+		if number.EndPos == starPos || number.EndPos-1 == starPos {
+			return true
+		}
+		// when the lineIndex of number is not same, just check the boundarie
+		if number.LineIndex != lineIndex {
+			if number.StartPos <= starPos && number.EndPos >= starPos {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func findCharPositions(str string, targetChar rune) []int {
+	positions := []int{}
+
+	for i, char := range str {
+		if char == targetChar {
+			positions = append(positions, i)
+		}
+	}
+
+	return positions
+}
