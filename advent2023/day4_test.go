@@ -97,7 +97,6 @@ func TestDay4Task2(t *testing.T) {
 	}
 
 	// add up all values
-
 	total := 0
 	for idx, _ := range lines {
 		total += cards[idx]
