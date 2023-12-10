@@ -79,7 +79,7 @@ func TestDay4Task2(t *testing.T) {
 	cards := make([]int, len(lines))
 
 	// initialize
-	for idx, _ := range lines {
+	for idx := range lines {
 		cards[idx] = 1
 	}
 
@@ -98,7 +98,7 @@ func TestDay4Task2(t *testing.T) {
 
 	// add up all values
 	total := 0
-	for idx, _ := range lines {
+	for idx := range lines {
 		total += cards[idx]
 	}
 	// I got 8477787 for my puzzle input
